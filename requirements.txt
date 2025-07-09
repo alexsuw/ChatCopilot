@@ -1,0 +1,13 @@
+aiogram==3.4.1
+fastapi==0.111.0
+uvicorn==0.29.0
+python-dotenv==1.0.1
+loguru==0.7.2
+google-generativeai==0.5.4
+pinecone-client==3.2.2
+openai==1.25.2
+numpy==1.26.4
+gunicorn==22.0.0
+supabase==2.4.1
+pydantic-settings==2.2.1
+httpx==0.26.0

@@ -1,0 +1,30 @@
+# Docker
+Dockerfile
+.dockerignore
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+/env/
+/venv/
+/pip-cache/
+
+# Environment variables
+.env
+
+# Git
+.git
+.gitignore
+
+# OS-specific
+.DS_Store
+Thumbs.db 

@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache
+.coverage
+.tox
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+ANALYSIS.md
+MIGRATION_GUIDE.md
+
+# Logs
+*.log
+logs/
+
+# Environment files (we'll copy .env separately)
+.env.example 
