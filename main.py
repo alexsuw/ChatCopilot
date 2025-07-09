@@ -36,6 +36,7 @@ async def main():
         BotCommand(command="set_system_message", description="✍️ Задать системное сообщение"),
         BotCommand(command="cancel", description="❌ Выйти из режима диалога"),
         BotCommand(command="test_pinecone", description="🧪 Тестировать Pinecone (админы)"),
+        BotCommand(command="debug_system", description="🔧 Диагностика системы RAG"),
     ]
     await bot.set_my_commands(commands, BotCommandScopeDefault())
 
