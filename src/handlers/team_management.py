@@ -159,6 +159,9 @@ async def link_chat_command(message: Message):
     user_id = message.from_user.id
     
     try:
+        # Ensure user exists in database
+        await get_or_create_user(message.from_user)
+        
         # Get user's admin teams
         admin_teams = await get_user_admin_teams(user_id)
         
@@ -167,11 +170,13 @@ async def link_chat_command(message: Message):
             return
         
         # Create keyboard with teams
-        keyboard = select_chat_team_keyboard(admin_teams)
+        keyboard = select_team_keyboard(admin_teams)
         await message.answer("Выберите команду для привязки к этому чату:", reply_markup=keyboard)
         
+    except KeyError as e:
+        await message.answer(f"❌ Ошибка в структуре данных команды. Обратитесь к администратору.\nТехническая информация: отсутствует поле {e}")
     except Exception as e:
-        await message.answer(f"❌ Ошибка при получении команд: {e}")
+        await message.answer(f"❌ Ошибка при получении списка команд.\nВозможные причины:\n• Проблема с подключением к базе данных\n• Временные неполадки сервиса\n\nПопробуйте позже или обратитесь к администратору.\nТехническая информация: {e}")
 
 # --- System Message Handler ---
 @router.message(Command("set_system_message"))
@@ -179,6 +184,9 @@ async def set_system_message_command(message: Message):
     user_id = message.from_user.id
     
     try:
+        # Ensure user exists in database
+        await get_or_create_user(message.from_user)
+        
         # Get user's admin teams
         admin_teams = await get_user_admin_teams(user_id)
         
@@ -190,8 +198,10 @@ async def set_system_message_command(message: Message):
         keyboard = select_team_for_system_message_keyboard(admin_teams)
         await message.answer("Выберите команду для настройки системного сообщения:", reply_markup=keyboard)
         
+    except KeyError as e:
+        await message.answer(f"❌ Ошибка в структуре данных команды. Обратитесь к администратору.\nТехническая информация: отсутствует поле {e}")
     except Exception as e:
-        await message.answer(f"❌ Ошибка при получении команд: {e}")
+        await message.answer(f"❌ Ошибка при получении списка команд.\nВозможные причины:\n• Проблема с подключением к базе данных\n• Временные неполадки сервиса\n\nПопробуйте позже или обратитесь к администратору.\nТехническая информация: {e}")
 
 # --- Callback Handlers ---
 @router.callback_query(F.data.startswith("link_chat:"))
@@ -207,7 +217,15 @@ async def process_link_chat(callback: CallbackQuery):
         await callback.message.edit_text("✅ Чат успешно привязан к команде!")
         
     except Exception as e:
-        await callback.message.edit_text(f"❌ Ошибка при привязке чата: {e}")
+        await callback.message.edit_text(
+            f"❌ Ошибка при привязке чата к команде.\n"
+            f"Возможные причины:\n"
+            f"• Проблема с подключением к базе данных\n"
+            f"• Команда была удалена\n"
+            f"• У вас нет прав администратора команды\n\n"
+            f"Попробуйте позже или обратитесь к администратору.\n"
+            f"Техническая информация: {e}"
+        )
 
 @router.callback_query(F.data.startswith("set_system_message:"))
 async def process_set_system_message(callback: CallbackQuery, state: FSMContext):
