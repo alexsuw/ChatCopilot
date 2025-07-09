@@ -35,6 +35,104 @@ async def get_or_create_user(user: types.User):
     return existing_user
 
 # --- Debug System Handler ---
+@router.message(Command("check_buffers"))
+async def check_buffers_command(message: Message):
+    """Показать текущее состояние буферов сообщений"""
+    
+    result = "📊 **Состояние буферов сообщений:**\n\n"
+    
+    if not message_buffer:
+        result += "📭 Буферы пусты\n\n"
+        result += "**Возможные причины:**\n"
+        result += "• Бот недавно перезапущен\n"
+        result += "• Нет привязанных чатов\n"
+        result += "• Нет сообщений в групповых чатах\n"
+        result += "• Проблемы с обработкой сообщений\n\n"
+        result += "**Что проверить:**\n"
+        result += "• `/debug_system` - полная диагностика\n"
+        result += "• `/monitor_messages` - мониторинг в реальном времени\n"
+        result += "• Убедитесь, что чаты привязаны (`/link_chat`)"
+    else:
+        total_messages = sum(len(msgs) for msgs in message_buffer.values())
+        result += f"✅ Активных буферов: {len(message_buffer)}\n"
+        result += f"📝 Всего сообщений в буферах: {total_messages}\n\n"
+        
+        for team_id, messages in message_buffer.items():
+            result += f"**Команда {team_id[:8]}...:**\n"
+            result += f"• Сообщений в буфере: {len(messages)}/5\n"
+            
+            if messages:
+                result += f"• Последние сообщения:\n"
+                for msg in messages[-2:]:  # Показать последние 2 сообщения
+                    preview = msg[:40] + "..." if len(msg) > 40 else msg
+                    result += f"  - {preview}\n"
+            result += "\n"
+        
+        result += "💡 **Подсказка:** Буфер обрабатывается при накоплении 5 сообщений"
+    
+    await message.answer(result, parse_mode="Markdown")
+
+@router.message(Command("force_process_buffers"))
+async def force_process_buffers_command(message: Message):
+    """Принудительно обработать все буферы (для админов)"""
+    
+    user_id = message.from_user.id
+    
+    try:
+        # Проверяем, что пользователь админ хотя бы одной команды
+        admin_teams = await get_user_admin_teams(user_id)
+        
+        if not admin_teams:
+            await message.answer("❌ У вас нет прав администратора команд.")
+            return
+        
+        if not message_buffer:
+            await message.answer("📭 Буферы пусты - нечего обрабатывать.")
+            return
+        
+        await message.answer("🔄 Запуск принудительной обработки буферов...")
+        
+        processed_count = 0
+        for team_id, messages in list(message_buffer.items()):
+            if messages:  # Если есть сообщения
+                try:
+                    # Принудительная обработка любого количества сообщений
+                    chunk_text = "\n".join(messages)
+                    
+                    if len(chunk_text.strip()) == 0:
+                        continue
+                    
+                    # Импортируем необходимые функции
+                    from src.services.vector_db import get_embedding, upsert_vector
+                    import uuid
+                    
+                    # Создаем эмбеддинг
+                    vector = await get_embedding(chunk_text)
+                    
+                    # Сохраняем в Pinecone
+                    vector_id = str(uuid.uuid4())
+                    upsert_vector(vector_id, vector, team_id, chunk_text)
+                    
+                    # Очищаем буфер
+                    message_buffer[team_id] = []
+                    
+                    processed_count += 1
+                    await message.answer(
+                        f"✅ Команда {team_id[:8]}...: обработано {len(messages)} сообщений\n"
+                        f"📄 Создан вектор: {vector_id[:8]}..."
+                    )
+                    
+                except Exception as e:
+                    await message.answer(f"❌ Ошибка обработки команды {team_id}: {e}")
+        
+        if processed_count > 0:
+            await message.answer(f"✅ Обработано буферов: {processed_count}")
+        else:
+            await message.answer("⚠️ Нет буферов для обработки.")
+    
+    except Exception as e:
+        await message.answer(f"❌ Ошибка при принудительной обработке: {e}")
+
 @router.message(Command("debug_system"))
 async def debug_system_command(message: Message):
     await message.answer("🔧 **Диагностика системы RAG**\n\nПроверяю все компоненты...")

@@ -37,6 +37,9 @@ async def main():
         BotCommand(command="cancel", description="❌ Выйти из режима диалога"),
         BotCommand(command="test_pinecone", description="🧪 Тестировать Pinecone (админы)"),
         BotCommand(command="debug_system", description="🔧 Диагностика системы RAG"),
+        BotCommand(command="monitor_messages", description="🔍 Мониторинг сообщений в реальном времени"),
+        BotCommand(command="check_buffers", description="📊 Проверить состояние буферов сообщений"),
+        BotCommand(command="force_process_buffers", description="🔄 Принудительно обработать буферы"),
     ]
     await bot.set_my_commands(commands, BotCommandScopeDefault())
 
