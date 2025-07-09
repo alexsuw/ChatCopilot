@@ -12,6 +12,7 @@ from src.services.supabase_client import (
     get_user_teams, get_user_admin_teams, get_user_by_id, link_chat_to_team,
     update_team_system_message
 )
+from src.services.vector_db import test_team_vector_creation, get_namespace_stats
 
 router = Router()
 
@@ -148,6 +149,66 @@ async def my_teams_command(message: Message):
         
     except Exception as e:
         await message.answer(f"❌ Ошибка при получении списка команд: {e}")
+
+# --- Test Pinecone Handler ---
+@router.message(Command("test_pinecone"))
+async def test_pinecone_command(message: Message):
+    user_id = message.from_user.id
+    
+    try:
+        # Ensure user exists in database
+        await get_or_create_user(message.from_user)
+        
+        # Get user's admin teams
+        admin_teams = await get_user_admin_teams(user_id)
+        
+        if not admin_teams:
+            await message.answer("❌ У вас нет команд для тестирования. Создайте команду командой /create_team")
+            return
+        
+        await message.answer("🔄 Тестирование Pinecone...")
+        
+        results = []
+        for team in admin_teams:
+            team_id = team['id']
+            team_name = team['name']
+            
+            # Get current stats
+            stats_before = get_namespace_stats(team_id)
+            
+            # Test vector creation
+            test_result = await test_team_vector_creation(team_id)
+            
+            # Get stats after
+            stats_after = get_namespace_stats(team_id)
+            
+            results.append({
+                'team': team_name,
+                'team_id': team_id,
+                'before': stats_before,
+                'test': test_result,
+                'after': stats_after
+            })
+        
+        # Format response
+        response = "🧪 **Результаты тестирования Pinecone:**\n\n"
+        
+        for result in results:
+            response += f"📁 **{result['team']}** (`{result['team_id']}`)\n"
+            response += f"• До теста: {result['before']['vector_count']} векторов\n"
+            
+            if result['test']['success']:
+                response += f"• ✅ Тест успешен (ID: `{result['test']['vector_id']}`)\n"
+                response += f"• После теста: {result['after']['vector_count']} векторов\n"
+            else:
+                response += f"• ❌ Тест неудачен: {result['test'].get('error', 'Unknown error')}\n"
+            
+            response += "\n"
+        
+        await message.answer(response, parse_mode="Markdown")
+        
+    except Exception as e:
+        await message.answer(f"❌ Ошибка при тестировании Pinecone: {e}")
 
 # --- Link Chat Handler ---
 @router.message(Command("link_chat"))

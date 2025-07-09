@@ -34,6 +34,7 @@ async def main():
         BotCommand(command="my_teams", description="👥 Мои команды"),
         BotCommand(command="link_chat", description="🔗 Привязать чат к команде"),
         BotCommand(command="set_system_message", description="✍️ Задать системное сообщение"),
+        BotCommand(command="test_pinecone", description="🧪 Тестировать Pinecone (админы)"),
     ]
     await bot.set_my_commands(commands, BotCommandScopeDefault())
 
