@@ -9,7 +9,7 @@ def select_team_keyboard(teams):
 
 def select_chat_team_keyboard(teams):
     buttons = [
-        [InlineKeyboardButton(text=team['name'], callback_data=f"chat_with_team:{team['id']}")]
+        [InlineKeyboardButton(text=f"💬 Диалог с {team['name']}", callback_data=f"chat_with_team:{team['id']}")]
         for team in teams
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)

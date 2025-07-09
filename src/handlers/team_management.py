@@ -127,25 +127,49 @@ async def my_teams_command(message: Message):
             await message.answer("📭 У вас нет команд. Создайте новую командой /create_team или присоединитесь к существующей командой /join_team")
             return
         
+        # Combine all teams for chat selection
+        all_teams = []
+        
+        # Add admin teams
+        for team in admin_teams:
+            team_copy = team.copy()
+            team_copy['role'] = 'admin'
+            all_teams.append(team_copy)
+        
+        # Add member teams (excluding admin teams to avoid duplicates)
+        admin_team_ids = [t['id'] for t in admin_teams]
+        for team in teams:
+            if team['id'] not in admin_team_ids:
+                team_copy = team.copy()
+                team_copy['role'] = 'member'
+                all_teams.append(team_copy)
+        
+        if not all_teams:
+            await message.answer("📭 У вас нет команд. Создайте новую командой /create_team или присоединитесь к существующей командой /join_team")
+            return
+        
+        # Build response text with team info
         response = "👥 **Ваши команды:**\n\n"
         
-        # Show admin teams
+        # Show admin teams info
         if admin_teams:
             response += "🔹 **Команды, где вы администратор:**\n"
             for team in admin_teams:
                 response += f"• {team['name']} (ID: `{team['id']}`)\n"
                 response += f"  🔑 Код: `{team['invite_code']}`\n\n"
         
-        # Show member teams (excluding admin teams)
-        admin_team_ids = [t['id'] for t in admin_teams]
+        # Show member teams info
         member_teams = [t for t in teams if t['id'] not in admin_team_ids]
-        
         if member_teams:
             response += "🔸 **Команды, где вы участник:**\n"
             for team in member_teams:
                 response += f"• {team['name']} (ID: `{team['id']}`)\n\n"
         
-        await message.answer(response, parse_mode="Markdown")
+        response += "💬 **Выберите команду для начала диалога с ИИ-ассистентом:**"
+        
+        # Create keyboard for chat selection
+        keyboard = select_chat_team_keyboard(all_teams)
+        await message.answer(response, reply_markup=keyboard, parse_mode="Markdown")
         
     except Exception as e:
         await message.answer(f"❌ Ошибка при получении списка команд: {e}")
