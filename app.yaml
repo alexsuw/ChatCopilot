@@ -1,0 +1,36 @@
+name: chatcopilot-worker
+services:
+- name: worker
+  source_dir: /
+  github:
+    repo: alexsuw/ChatCopilot
+    branch: main
+  run_command: python main.py
+  environment_slug: python
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  dockerfile_path: Dockerfile
+  envs:
+  - key: BOT_TOKEN
+    value: YOUR_BOT_TOKEN
+    type: SECRET
+  - key: SUPABASE_URL
+    value: YOUR_SUPABASE_URL
+  - key: SUPABASE_KEY
+    value: YOUR_SUPABASE_KEY
+    type: SECRET
+  - key: GOOGLE_AI_API_KEY
+    value: YOUR_GOOGLE_AI_API_KEY
+    type: SECRET
+  - key: PINECONE_API_KEY
+    value: YOUR_PINECONE_API_KEY
+    type: SECRET
+  - key: PINECONE_ENVIRONMENT
+    value: YOUR_PINECONE_ENVIRONMENT
+  - key: OPENAI_API_KEY
+    value: YOUR_OPENAI_API_KEY
+    type: SECRET
+  - key: ENVIRONMENT
+    value: production
+  - key: DEBUG
+    value: "false" 
