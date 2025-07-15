@@ -120,7 +120,7 @@ async def handle_chat_question(message: Message, state: FSMContext, bot: Bot):
         answer = await get_answer(full_context, question)
         
         # 8. Формируем итоговый ответ
-        footer = f"\n\n---\n💬 Чат с командой «{team_name}» | `/cancel` для выхода"
+        footer = f"\n---\n💬 Чат с командой «{team_name}» | `/cancel` для выхода"
         final_answer = answer + footer
         
         await message.answer(final_answer, parse_mode="Markdown")
