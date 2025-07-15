@@ -22,8 +22,8 @@ async def main():
     # Include routers
     dp.include_router(basic.router)
     dp.include_router(team_management.router)
+    dp.include_router(qa_session.router)  # Должен быть ПЕРЕД message_ingestion!
     dp.include_router(message_ingestion.router)
-    dp.include_router(qa_session.router)
 
     # --- Bot commands ---
     commands = [
