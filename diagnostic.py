@@ -27,7 +27,8 @@ class ServiceDiagnostic:
         
         required_vars = {
             'BOT_TOKEN': 'Telegram Bot Token',
-            'GOOGLE_API_KEY': 'Google Gemini API Key',
+            'VLLM_URL': 'vLLM Server URL',
+            'VLLM_MODEL_NAME': 'vLLM Model Name',
             'OPENAI_API_KEY': 'OpenAI API Key',
             'PINECONE_API_KEY': 'Pinecone API Key',
             'PINECONE_HOST': 'Pinecone Host',
@@ -63,31 +64,40 @@ class ServiceDiagnostic:
         print("✅ Все переменные окружения настроены")
         return True
     
-    async def check_gemini(self) -> bool:
-        """Проверяет работу Google Gemini"""
-        print("\n🤖 Проверка Google Gemini...")
+    async def check_vllm(self) -> bool:
+        """Проверяет работу vLLM сервера"""
+        print("\n🤖 Проверка vLLM...")
         
         try:
-            from src.services.llm import get_answer
+            from src.services.llm import check_vllm_health, test_vllm_simple
             
-            test_context = "Тестовый контекст: обсуждение погоды"
-            test_question = "Какая погода?"
+            # Проверяем health endpoint
+            health_info = await check_vllm_health()
+            print(f"   URL: {health_info['url']}")
+            print(f"   Модель: {health_info['model']}")
+            print(f"   Статус: {health_info['status']}")
             
-            answer = await get_answer(test_context, test_question)
+            if health_info['status'] != 'healthy':
+                print(f"❌ vLLM недоступен: {health_info['message']}")
+                return False
+            
+            # Проверяем генерацию ответа
+            print("   Тестирование генерации...")
+            answer = await test_vllm_simple()
             
             if "❌" in answer:
-                print(f"❌ Gemini вернул ошибку: {answer}")
+                print(f"❌ vLLM вернул ошибку: {answer}")
                 return False
             elif len(answer) < 10:
                 print(f"⚠️ Слишком короткий ответ: {answer}")
                 return False
             else:
-                print(f"✅ Gemini работает корректно")
+                print(f"✅ vLLM работает корректно")
                 print(f"   Ответ: {answer[:50]}...")
                 return True
                 
         except Exception as e:
-            print(f"❌ Ошибка Gemini: {e}")
+            print(f"❌ Ошибка vLLM: {e}")
             return False
     
     async def check_openai(self) -> bool:
@@ -164,7 +174,7 @@ class ServiceDiagnostic:
         # Проверки
         checks = [
             ("Переменные окружения", self.check_env_variables),
-            ("Google Gemini", self.check_gemini),
+            ("vLLM", self.check_vllm),
             ("OpenAI", self.check_openai),
             ("Pinecone", self.check_pinecone),
             ("Supabase", self.check_supabase)

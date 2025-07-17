@@ -8,13 +8,19 @@ class Settings(BaseSettings):
     openai_api_key: SecretStr
     pinecone_api_key: SecretStr
     pinecone_host: str
-    google_api_key: SecretStr
+    
+    # vLLM Configuration
+    vllm_url: str = "http://localhost:8000"
+    vllm_model_name: str = "Qwen/Qwen3-0.6B"
+    vllm_max_tokens: int = 2048
+    vllm_temperature: float = 0.7
+    vllm_timeout: int = 30
     
     # Supabase
     supabase_url: str
     supabase_anon_key: SecretStr
     supabase_service_key: SecretStr
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 settings = Settings() 
