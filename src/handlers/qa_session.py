@@ -5,7 +5,7 @@ from aiogram.filters import Command
 import logging
 
 from src.states.team import ChatWithTeam
-from src.services.vector_db import get_embedding, pinecone_index
+# from src.services.vector_db import get_embedding, pinecone_index  # ОТКЛЮЧЕНО
 from src.services.llm import get_answer
 from src.handlers.message_ingestion import message_buffer
 from src.services.supabase_client import get_team_by_id
@@ -87,24 +87,27 @@ async def handle_chat_question(message: Message, state: FSMContext, bot: Bot):
 
         logging.info(f"📋 Using system message for team {team_id}: {system_message[:100]}...")
 
-        # 2. Создаем эмбеддинг для вопроса
-        question_vector = await get_embedding(question)
-        logging.info(f"🧠 Created embedding for question in team {team_id}")
+        # 2. Создаем эмбеддинг для вопроса (ОТКЛЮЧЕНО)
+        # question_vector = await get_embedding(question)
+        # logging.info(f"🧠 Created embedding for question in team {team_id}")
 
-        # 3. Ищем в Pinecone
-        query_result = pinecone_index.query(
-            namespace=f"team-{team_id}",
-            vector=question_vector,
-            top_k=3,  # Топ-3 релевантных чанка
-            include_metadata=True
-        )
+        # 3. Ищем в Pinecone (ОТКЛЮЧЕНО)
+        # query_result = pinecone_index.query(
+        #     namespace=f"team-{team_id}",
+        #     vector=question_vector,
+        #     top_k=3,  # Топ-3 релевантных чанка
+        #     include_metadata=True
+        # )
+        # 
+        # logging.info(f"📊 Pinecone query returned {len(query_result.get('matches', []))} matches for team {team_id}")
         
-        logging.info(f"📊 Pinecone query returned {len(query_result.get('matches', []))} matches for team {team_id}")
+        # 4. Формируем контекст (ОТКЛЮЧЕНО - НЕ ИСПОЛЬЗУЕМ ВЕКТОРНУЮ БД)
+        # context = ""
+        # for match in query_result['matches']:
+        #     context += match['metadata']['text'] + "\n---\n"
         
-        # 4. Формируем контекст
+        # Упрощенный контекст без векторной БД
         context = ""
-        for match in query_result['matches']:
-            context += match['metadata']['text'] + "\n---\n"
         
         # 5. Добавляем недавние сообщения из буфера
         if team_id in message_buffer and message_buffer[team_id]:
@@ -115,8 +118,8 @@ async def handle_chat_question(message: Message, state: FSMContext, bot: Bot):
         # 6. Формируем полный контекст для LLM
         full_context = f"System Prompt: {system_message}\n\nChat History Context:\n{context}"
 
-        # 7. Получаем ответ от Gemini
-        logging.info(f"🤖 Requesting answer from Gemini for team {team_id}")
+        # 7. Получаем ответ от vLLM
+        logging.info(f"🤖 Requesting answer from vLLM for team {team_id}")
         answer = await get_answer(full_context, question)
         
         # 8. Формируем итоговый ответ

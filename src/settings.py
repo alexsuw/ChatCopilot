@@ -4,9 +4,9 @@ from pydantic import SecretStr
 class Settings(BaseSettings):
     bot_token: SecretStr
     
-    # Vector Database Services
-    pinecone_api_key: SecretStr
-    pinecone_host: str
+    # Vector Database Services (ОТКЛЮЧЕНО)
+    # pinecone_api_key: SecretStr
+    # pinecone_host: str
     
     # vLLM Configuration
     vllm_url: str = "http://localhost:8000"

@@ -29,8 +29,8 @@ class ServiceDiagnostic:
             'BOT_TOKEN': 'Telegram Bot Token',
             'VLLM_URL': 'vLLM Server URL',
             'VLLM_MODEL_NAME': 'vLLM Model Name',
-            'PINECONE_API_KEY': 'Pinecone API Key',
-            'PINECONE_HOST': 'Pinecone Host',
+            # 'PINECONE_API_KEY': 'Pinecone API Key',  # ОТКЛЮЧЕНО - НЕ ИСПОЛЬЗУЕМ ВЕКТОРНУЮ БД
+            # 'PINECONE_HOST': 'Pinecone Host',        # ОТКЛЮЧЕНО - НЕ ИСПОЛЬЗУЕМ ВЕКТОРНУЮ БД
             'SUPABASE_URL': 'Supabase URL',
             'SUPABASE_ANON_KEY': 'Supabase Anon Key',
             'SUPABASE_SERVICE_KEY': 'Supabase Service Key'
@@ -121,29 +121,29 @@ class ServiceDiagnostic:
             print(f"❌ Ошибка при проверке эмбеддингов: {e}")
             return False
     
-    async def check_pinecone(self) -> bool:
-        """Проверяет работу Pinecone"""
-        print("\n📊 Проверка Pinecone...")
-        
-        try:
-            from src.services.vector_db import pinecone_index, get_namespace_stats
-            
-            # Проверяем подключение к индексу
-            stats = pinecone_index.describe_index_stats()
-            print(f"✅ Pinecone подключен")
-            print(f"   Общее количество векторов: {stats.total_vector_count}")
-            print(f"   Размерность: {stats.dimension}")
-            
-            # Проверяем конкретный namespace
-            test_namespace = "test-team-123"
-            ns_stats = get_namespace_stats(test_namespace)
-            print(f"   Векторов в тестовом namespace: {ns_stats.get('vector_count', 0)}")
-            
-            return True
-            
-        except Exception as e:
-            print(f"❌ Ошибка Pinecone: {e}")
-            return False
+    # async def check_pinecone(self) -> bool:  # ОТКЛЮЧЕНО - НЕ ИСПОЛЬЗУЕМ ВЕКТОРНУЮ БД
+    #     """Проверяет работу Pinecone"""
+    #     print("\n📊 Проверка Pinecone...")
+    #     
+    #     try:
+    #         from src.services.vector_db import pinecone_index, get_namespace_stats
+    #         
+    #         # Проверяем подключение к индексу
+    #         stats = pinecone_index.describe_index_stats()
+    #         print(f"✅ Pinecone подключен")
+    #         print(f"   Общее количество векторов: {stats.total_vector_count}")
+    #         print(f"   Размерность: {stats.dimension}")
+    #         
+    #         # Проверяем конкретный namespace
+    #         test_namespace = "test-team-123"
+    #         ns_stats = get_namespace_stats(test_namespace)
+    #         print(f"   Векторов в тестовом namespace: {ns_stats.get('vector_count', 0)}")
+    #         
+    #         return True
+    #         
+    #     except Exception as e:
+    #         print(f"❌ Ошибка Pinecone: {e}")
+    #         return False
     
     async def check_supabase(self) -> bool:
         """Проверяет работу Supabase"""
@@ -173,8 +173,8 @@ class ServiceDiagnostic:
         checks = [
             ("Переменные окружения", self.check_env_variables),
             ("vLLM", self.check_vllm),
-            ("Эмбеддинги", self.check_embeddings),
-            ("Pinecone", self.check_pinecone),
+            # ("Эмбеддинги", self.check_embeddings),  # ОТКЛЮЧЕНО - НЕ ИСПОЛЬЗУЕМ ВЕКТОРНУЮ БД
+            # ("Pinecone", self.check_pinecone),      # ОТКЛЮЧЕНО - НЕ ИСПОЛЬЗУЕМ ВЕКТОРНУЮ БД
             ("Supabase", self.check_supabase)
         ]
         

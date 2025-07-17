@@ -6,7 +6,7 @@ from aiogram import Router, F
 from aiogram.types import Message
 
 from src.services.supabase_client import get_linked_chat
-from src.services.vector_db import get_embedding, upsert_vector
+# from src.services.vector_db import get_embedding, upsert_vector  # ОТКЛЮЧЕНО
 
 router = Router()
 # УБИРАЕМ фильтр роутера - будем проверять в самом обработчике
@@ -164,55 +164,56 @@ async def message_handler(message: Message):
             except Exception as e:
                 logging.error(f"Ошибка отправки уведомления мониторинга: {e}")
         
-        asyncio.create_task(process_chunk(team_id))
+        # asyncio.create_task(process_chunk(team_id))  # ОТКЛЮЧЕНО - НЕ ИСПОЛЬЗУЕМ ВЕКТОРНУЮ БД
+        logging.info(f"📝 Сохранили сообщение в буфер для команды {team_id} (векторная БД отключена)")
 
 
-async def process_chunk(team_id: str):
-    logging.info(f"🔄 Starting chunk processing for team {team_id}")
-    
-    async with processing_locks[team_id]:
-        if len(message_buffer[team_id]) < CHUNK_SIZE:
-            logging.warning(f"⏹️ Chunk processing aborted for team {team_id}: buffer size {len(message_buffer[team_id])} < {CHUNK_SIZE}")
-            return
-
-        # Get the chunk and clear the buffer for this team
-        messages_to_process = message_buffer[team_id][:CHUNK_SIZE]
-        message_buffer[team_id] = message_buffer[team_id][CHUNK_SIZE:]
-        
-        logging.info(f"📦 Processing {len(messages_to_process)} messages for team {team_id}. Remaining in buffer: {len(message_buffer[team_id])}")
-
-    chunk_text = "\n".join(messages_to_process)
-    
-    try:
-        logging.info(f"🧠 Creating embedding for team {team_id} chunk (length: {len(chunk_text)} chars)")
-        logging.debug(f"Chunk preview: {chunk_text[:100]}...")
-        
-        # Get embedding
-        vector = await get_embedding(chunk_text)
-        logging.info(f"✅ Embedding created successfully for team {team_id} (vector dimension: {len(vector)})")
-        
-        # Upsert to Pinecone
-        vector_id = str(uuid.uuid4())
-        logging.info(f"💾 Upserting vector {vector_id} to Pinecone namespace 'team-{team_id}'")
-        upsert_vector(vector_id, vector, team_id, chunk_text)
-        
-        logging.info(f"🎉 Successfully processed and upserted chunk for team {team_id}. Vector ID: {vector_id}")
-        
-        # Verify the upsert
-        from src.services.vector_db import get_namespace_stats
-        stats = get_namespace_stats(team_id)
-        logging.info(f"📊 Current namespace stats for team {team_id}: {stats['vector_count']} vectors")
-
-    except Exception as e:
-        logging.error(f"💥 Error processing chunk for team {team_id}: {e}", exc_info=True)
-        # Re-add messages to buffer if processing fails
-        logging.info(f"🔄 Re-adding {len(messages_to_process)} messages to buffer for team {team_id}")
-        message_buffer[team_id] = messages_to_process + message_buffer[team_id]
-        
-        # Also log what went wrong specifically
-        if "openai" in str(e).lower():
-            logging.error(f"🚫 OpenAI API error: Check API key and quota")
-        elif "pinecone" in str(e).lower():
-            logging.error(f"🚫 Pinecone error: Check API key and index configuration")
-        else:
-            logging.error(f"🚫 Unknown error type: {type(e).__name__}") 
+# async def process_chunk(team_id: str):  # ОТКЛЮЧЕНО - НЕ ИСПОЛЬЗУЕМ ВЕКТОРНУЮ БД
+#     logging.info(f"🔄 Starting chunk processing for team {team_id}")
+#     
+#     async with processing_locks[team_id]:
+#         if len(message_buffer[team_id]) < CHUNK_SIZE:
+#             logging.warning(f"⏹️ Chunk processing aborted for team {team_id}: buffer size {len(message_buffer[team_id])} < {CHUNK_SIZE}")
+#             return
+# 
+#         # Get the chunk and clear the buffer for this team
+#         messages_to_process = message_buffer[team_id][:CHUNK_SIZE]
+#         message_buffer[team_id] = message_buffer[team_id][CHUNK_SIZE:]
+#         
+#         logging.info(f"📦 Processing {len(messages_to_process)} messages for team {team_id}. Remaining in buffer: {len(message_buffer[team_id])}")
+# 
+#     chunk_text = "\n".join(messages_to_process)
+#     
+#     try:
+#         logging.info(f"🧠 Creating embedding for team {team_id} chunk (length: {len(chunk_text)} chars)")
+#         logging.debug(f"Chunk preview: {chunk_text[:100]}...")
+#         
+#         # Get embedding
+#         vector = await get_embedding(chunk_text)
+#         logging.info(f"✅ Embedding created successfully for team {team_id} (vector dimension: {len(vector)})")
+#         
+#         # Upsert to Pinecone
+#         vector_id = str(uuid.uuid4())
+#         logging.info(f"💾 Upserting vector {vector_id} to Pinecone namespace 'team-{team_id}'")
+#         upsert_vector(vector_id, vector, team_id, chunk_text)
+#         
+#         logging.info(f"🎉 Successfully processed and upserted chunk for team {team_id}. Vector ID: {vector_id}")
+#         
+#         # Verify the upsert
+#         from src.services.vector_db import get_namespace_stats
+#         stats = get_namespace_stats(team_id)
+#         logging.info(f"📊 Current namespace stats for team {team_id}: {stats['vector_count']} vectors")
+# 
+#     except Exception as e:
+#         logging.error(f"💥 Error processing chunk for team {team_id}: {e}", exc_info=True)
+#         # Re-add messages to buffer if processing fails
+#         logging.info(f"🔄 Re-adding {len(messages_to_process)} messages to buffer for team {team_id}")
+#         message_buffer[team_id] = messages_to_process + message_buffer[team_id]
+#         
+#         # Also log what went wrong specifically
+#         if "openai" in str(e).lower():
+#             logging.error(f"🚫 OpenAI API error: Check API key and quota")
+#         elif "pinecone" in str(e).lower():
+#             logging.error(f"🚫 Pinecone error: Check API key and index configuration")
+#         else:
+#             logging.error(f"🚫 Unknown error type: {type(e).__name__}") 
