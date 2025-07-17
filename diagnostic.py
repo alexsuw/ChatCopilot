@@ -29,7 +29,6 @@ class ServiceDiagnostic:
             'BOT_TOKEN': 'Telegram Bot Token',
             'VLLM_URL': 'vLLM Server URL',
             'VLLM_MODEL_NAME': 'vLLM Model Name',
-            'OPENAI_API_KEY': 'OpenAI API Key',
             'PINECONE_API_KEY': 'Pinecone API Key',
             'PINECONE_HOST': 'Pinecone Host',
             'SUPABASE_URL': 'Supabase URL',
@@ -100,27 +99,26 @@ class ServiceDiagnostic:
             print(f"❌ Ошибка vLLM: {e}")
             return False
     
-    async def check_openai(self) -> bool:
-        """Проверяет работу OpenAI"""
-        print("\n🧠 Проверка OpenAI...")
+    async def check_embeddings(self) -> bool:
+        """Проверяет работу локальных эмбеддингов"""
+        print("\n🧠 Проверка локальных эмбеддингов...")
         
         try:
-            from src.services.vector_db import get_embedding
+            from src.services.vector_db import test_embedding_service
             
-            test_text = "Тестовый текст для создания эмбеддинга"
+            result = await test_embedding_service()
             
-            embedding = await get_embedding(test_text)
-            
-            if embedding and len(embedding) > 0:
-                print(f"✅ OpenAI работает корректно")
-                print(f"   Размер эмбеддинга: {len(embedding)}")
+            if result['success']:
+                print(f"✅ Эмбеддинги работают корректно")
+                print(f"   Модель: {result['model']}")
+                print(f"   Размер эмбеддинга: {result['embedding_size']}")
                 return True
             else:
-                print("❌ OpenAI вернул пустой эмбеддинг")
+                print(f"❌ Ошибка эмбеддингов: {result['error']}")
                 return False
                 
         except Exception as e:
-            print(f"❌ Ошибка OpenAI: {e}")
+            print(f"❌ Ошибка при проверке эмбеддингов: {e}")
             return False
     
     async def check_pinecone(self) -> bool:
@@ -175,7 +173,7 @@ class ServiceDiagnostic:
         checks = [
             ("Переменные окружения", self.check_env_variables),
             ("vLLM", self.check_vllm),
-            ("OpenAI", self.check_openai),
+            ("Эмбеддинги", self.check_embeddings),
             ("Pinecone", self.check_pinecone),
             ("Supabase", self.check_supabase)
         ]

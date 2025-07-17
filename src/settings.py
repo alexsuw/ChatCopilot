@@ -4,8 +4,7 @@ from pydantic import SecretStr
 class Settings(BaseSettings):
     bot_token: SecretStr
     
-    # AI Services
-    openai_api_key: SecretStr
+    # Vector Database Services
     pinecone_api_key: SecretStr
     pinecone_host: str
     

@@ -1,22 +1,46 @@
-from openai import AsyncOpenAI
+from sentence_transformers import SentenceTransformer
 from pinecone import Pinecone
 import logging
 import uuid
+import asyncio
 
 from src.settings import settings
 
-# Initialize OpenAI client
-client = AsyncOpenAI(api_key=settings.openai_api_key.get_secret_value())
+# Initialize local embedding model
+try:
+    # Используем многоязычную модель для русского языка
+    embedding_model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')
+    logging.info("✅ Local embedding model loaded successfully")
+except Exception as e:
+    logging.error(f"❌ Failed to load embedding model: {e}")
+    embedding_model = None
 
 # Initialize Pinecone
 pc = Pinecone(api_key=settings.pinecone_api_key.get_secret_value())
 pinecone_index = pc.Index(host=settings.pinecone_host)
 
 
-async def get_embedding(text: str, model="text-embedding-3-small"):
-    text = text.replace("\n", " ")
-    response = await client.embeddings.create(input=[text], model=model)
-    return response.data[0].embedding
+async def get_embedding(text: str, model="local"):
+    """
+    Создает эмбеддинг для текста используя локальную модель
+    """
+    if embedding_model is None:
+        raise Exception("Embedding model not loaded")
+    
+    try:
+        # Очищаем текст
+        text = text.replace("\n", " ").strip()
+        
+        # Создаем эмбеддинг в отдельном потоке (модель синхронная)
+        loop = asyncio.get_event_loop()
+        embedding = await loop.run_in_executor(None, embedding_model.encode, text)
+        
+        # Возвращаем как список
+        return embedding.tolist()
+        
+    except Exception as e:
+        logging.error(f"❌ Failed to create embedding: {e}")
+        raise e
 
 def upsert_vector(vector_id: str, vector: list, team_id: str, text: str):
     """Upsert vector to Pinecone with team namespace"""
@@ -93,6 +117,38 @@ async def test_team_vector_creation(team_id: str, test_text: str = "Тестов
         
     except Exception as e:
         logging.error(f"Test failed for team {team_id}: {e}", exc_info=True)
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
+
+async def test_embedding_service():
+    """
+    Тестирует сервис эмбеддингов
+    """
+    try:
+        test_text = "Привет! Это тестовое сообщение для проверки эмбеддингов."
+        
+        logging.info("🧪 Testing embedding service...")
+        embedding = await get_embedding(test_text)
+        
+        if len(embedding) > 0:
+            logging.info(f"✅ Embedding created successfully! Size: {len(embedding)}")
+            return {
+                'success': True,
+                'embedding_size': len(embedding),
+                'model': 'paraphrase-multilingual-MiniLM-L12-v2'
+            }
+        else:
+            logging.error("❌ Empty embedding returned")
+            return {
+                'success': False,
+                'error': 'Empty embedding'
+            }
+            
+    except Exception as e:
+        logging.error(f"❌ Embedding test failed: {e}")
         return {
             'success': False,
             'error': str(e)

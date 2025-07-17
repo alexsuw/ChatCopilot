@@ -4,7 +4,8 @@ uvicorn==0.29.0
 python-dotenv==1.0.1
 loguru==0.7.2
 pinecone-client==3.2.2
-openai==1.25.2
+sentence-transformers==2.2.2
+torch==2.0.1
 numpy==1.26.4
 gunicorn==22.0.0
 supabase==2.4.1
