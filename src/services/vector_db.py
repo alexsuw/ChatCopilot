@@ -15,9 +15,9 @@ except Exception as e:
     logging.error(f"❌ Failed to load embedding model: {e}")
     embedding_model = None
 
-# Initialize Pinecone
-pc = Pinecone(api_key=settings.pinecone_api_key.get_secret_value())
-pinecone_index = pc.Index(host=settings.pinecone_host)
+# Initialize Pinecone (ОТКЛЮЧЕНО)
+# pc = Pinecone(api_key=settings.pinecone_api_key.get_secret_value())
+# pinecone_index = pc.Index(host=settings.pinecone_host)
 
 
 async def get_embedding(text: str, model="local"):

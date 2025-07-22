@@ -4,13 +4,9 @@ from pydantic import SecretStr
 class Settings(BaseSettings):
     bot_token: SecretStr
     
-    # Vector Database Services (ОТКЛЮЧЕНО)
-    # pinecone_api_key: SecretStr
-    # pinecone_host: str
-    
     # vLLM Configuration
     vllm_url: str = "http://localhost:8000"
-    vllm_model_name: str = "Qwen/Qwen3-0.6B"
+    vllm_model_name: str = "Qwen/Qwen3-4B"
     vllm_max_tokens: int = 2048
     vllm_temperature: float = 0.7
     vllm_timeout: int = 30
